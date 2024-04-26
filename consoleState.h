@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <string>
 
 // 最下方命令行的高度
 const int COMMAND_LINE_HEIGHT = 1;
@@ -13,10 +14,11 @@ private:
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	CHAR_INFO* buffer;
 	COORD cursorPos;
+public:
 	short ConsoleWidth;
 	short ConsoleHeight;
 	short ContentHeight;
-public:
+	short TabWidth;
 	ConsoleState();
 	~ConsoleState();
 	void updateCSBI();
@@ -30,6 +32,8 @@ public:
 	void updateCursorPos();
 	void setCursorPos(COORD pos);
 	void moveCursor(CursorDirection direction, int step);
+	void printCmd(std::string cmdStr);
+	void printCmd(std::string cmdStr, WORD textAttr);
 	ConsoleState SaveConsoleState();
 	void RestoreConsoleState(ConsoleState state);
 };

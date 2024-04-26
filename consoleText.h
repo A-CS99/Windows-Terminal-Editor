@@ -9,10 +9,11 @@ private:
 	int text_end;
 	int textHeight;
 	std::vector<ContentWithLine> text;
-	FileContent fileContent;
+	FileContent* fileContent;
 	ConsoleState consoleState;
 public:
-	ConsoleText(ConsoleState state, FileContent fileContent, int textHeight);
+	ConsoleText();
+	ConsoleText(ConsoleState state, FileContent* fileContent, int textHeight);
 	bool isTextEmpty();
 	bool isFileStart();
 	bool isFileEnd();
@@ -21,6 +22,11 @@ public:
 	void show();
 	void showLine(int lineNo);
 	void switchLineNumberFlag();
+	char getCharAt(int lineNo, short pos);
 	void insertChar(char c);
+	void deleteChar();
+	void deleteCharBehind();
+	void newLine();
+
 	~ConsoleText();
 };

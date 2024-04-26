@@ -15,18 +15,14 @@ EditorState::~EditorState()
 void EditorState::setEditorMode(EditorMode mode)
 {
 	if (this->currentMode != mode) {
-		COORD originCursorPos = this->consoleState.getCursorPos();
-		this->consoleState.setCursorPos({ 0, this->consoleState.getContentHeight() });
 		switch (mode) {
 		case EDITOR_MODE_INSERT:
-			std::cout << "[INSERT]";
+			consoleState.printCmd("[INSERT]", FOREGROUND_BLUE | BACKGROUND_GREEN);
 			break;
 		case EDITOR_MODE_NORMAL:
-			// Çå³ýÐÐÄÚÈÝ
-			std::cout << "          ";
+			consoleState.printCmd("");
 			break;
 		}
-		this->consoleState.setCursorPos(originCursorPos);
 		this->currentMode = mode;
 	}
 }

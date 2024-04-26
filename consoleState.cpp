@@ -1,3 +1,4 @@
+#include <iostream>
 #include "consoleState.h"
 
 ConsoleState::ConsoleState() {
@@ -34,6 +35,7 @@ void ConsoleState::initScreenSize() {
 	this->ConsoleWidth = this->csbi.srWindow.Right - this->csbi.srWindow.Left + 1;
 	this->ConsoleHeight = this->csbi.srWindow.Bottom - this->csbi.srWindow.Top + 1;
 	this->ContentHeight = this->ConsoleHeight - COMMAND_LINE_HEIGHT;
+	this->TabWidth = 8;
 }
 
 COORD ConsoleState::getConsoleSize() {
@@ -84,6 +86,39 @@ void ConsoleState::moveCursor(CursorDirection direction, int step) {
 		break;
 	}
 	this->setCursorPos(pos);
+}
+
+void ConsoleState::printCmd(std::string cmdStr) {
+	COORD pos = this->getCursorPos();
+	COORD consoleSize = this->getConsoleSize();
+	this->setCursorPos({ 0, this->getContentHeight() });
+	// 输出consoleSize.X个空字符, 清除行内容, 以便打印命令
+	for (int i = 0; i < consoleSize.X; i++) {
+		std::cout << " ";
+	}
+	this->setCursorPos({ 0, this->getContentHeight() });
+	std::cout << cmdStr;
+	this->setCursorPos(pos);
+}
+
+void ConsoleState::printCmd(std::string cmdStr, WORD textAttr) {
+	// 获取当前文本属性
+	WORD oldTextAttr = this->getCSBI().wAttributes;
+
+	COORD pos = this->getCursorPos();
+	COORD consoleSize = this->getConsoleSize();
+	this->setCursorPos({ 0, this->getContentHeight() });
+	// 输出consoleSize.X个空字符, 清除行内容, 以便打印命令
+	for (int i = 0; i < consoleSize.X; i++) {
+		std::cout << " ";
+	}
+	// 设置文本属性
+	SetConsoleTextAttribute(this->hConsoleOutput, textAttr);
+	// 输出命令
+	this->setCursorPos({ 0, this->getContentHeight() });
+	std::cout << cmdStr;
+	this->setCursorPos(pos);
+	SetConsoleTextAttribute(this->hConsoleOutput, oldTextAttr);
 }
 
 // 保存控制台状态和内容
