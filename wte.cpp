@@ -208,21 +208,19 @@ int main(int argc, char* argv[]) {
 										}
 										else if (cmdInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
 											// 按下回车键执行命令
+											editorState.setEditorMode(currentMode);
 											if (cmdStr == "q") {
 												if (fileContent.getHasChanged()) {
 													consoleState.printErr("Has Unsaved Changes. Use :wq to save and quit or :q! to force to quit.");
 												}
 												else {
 													running_flag = false;
-													editorState.setEditorMode(currentMode);
 												}
 											}
 											else if (cmdStr == "q!") {
 												running_flag = false;
-												editorState.setEditorMode(currentMode);
 											}
 											else if (cmdStr == "w") {
-												editorState.setEditorMode(currentMode);
 												if (fileContent.getHasChanged()) {
 													fileContent.saveFile();
 													consoleState.printInfo("File Saved.");
@@ -235,10 +233,8 @@ int main(int argc, char* argv[]) {
 												if (fileContent.getHasChanged()) {
 													fileContent.saveFile();
 													running_flag = false;
-													editorState.setEditorMode(currentMode);
 												}
 												else {
-													editorState.setEditorMode(currentMode);
 													consoleState.printWarn("No changes need to be saved. Try q Only.");
 												}
 											}
@@ -255,10 +251,10 @@ int main(int argc, char* argv[]) {
 													if (setInputRecord.EventType == KEY_EVENT) {
 														if (setInputRecord.Event.KeyEvent.bKeyDown) {
 															if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
+																consoleState.printCmd("");
 																break;
 															}
 															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) {
-																editorState.setEditorMode(currentMode);
 																break;
 															}
 															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_BACK) {
@@ -303,23 +299,19 @@ int main(int argc, char* argv[]) {
 													if (setType == "base") {
 														Config::setAttr(BASE_FRONT, frontColor);
 														Config::setAttr(BASE_BACK, backColor);
-														editorState.setEditorMode(currentMode);
 														consoleText.show();
 													}
 													else if (setType == "info") {
 														Config::setAttr(INFO_FRONT, frontColor);
 														Config::setAttr(INFO_BACK, backColor);
-														editorState.setEditorMode(currentMode);
 													}
 													else if (setType == "warn") {
 														Config::setAttr(WARN_FRONT, frontColor);
 														Config::setAttr(WARN_BACK, backColor);
-														editorState.setEditorMode(currentMode);
 													}
 													else if (setType == "err") {
 														Config::setAttr(ERR_FRONT, frontColor);
 														Config::setAttr(ERR_BACK, backColor);
-														editorState.setEditorMode(currentMode);
 													}
 													else {
 														consoleState.printErr("Unknown Command: " + setStr + ". Please try <type>=<foregroundColor>|[backgroundColor]");
