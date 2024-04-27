@@ -134,6 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="config.cpp" />
     <ClCompile Include="consoleState.cpp" />
     <ClCompile Include="editorState.cpp" />
     <ClCompile Include="fileContent.cpp" />
@@ -142,6 +143,7 @@
     <ClCompile Include="toolFuncs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="consoleState.h" />
     <ClInclude Include="editorState.h" />
     <ClInclude Include="fileContent.h" />

@@ -17,6 +17,7 @@ public:
 	bool isTextEmpty();
 	bool isFileStart();
 	bool isFileEnd();
+	int getTextHeight();
 	void updateText(int start, int end);
 	void updateText(int stepY);
 	void show();

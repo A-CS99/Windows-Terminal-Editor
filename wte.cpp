@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <array>
+#include "config.h"
 #include "fileContent.h"
 #include "consoleState.h"
 #include "consoleText.h"
@@ -7,6 +9,8 @@
 #include "toolFuncs.h"
 
 // 全局变量
+std::array<std::string, 13> validPlainExtensions{ "txt", "cpp", "h", "java", "cs", "py", "html", "css", "js", "php", "json", "xml", "yaml" };
+
 // 运行标志
 bool running_flag = true;
 
@@ -39,10 +43,21 @@ char backTillChar(CursorDirection direct) {
 int main(int argc, char* argv[]) {
 	// 读取文件相对路径
 	if (argc != 2) {
-		std::cout << std::endl << "Usage:" << std::endl << "Lab2 <file_path>" << std::endl;
+		std::cout << "Expecting for a path arguement." << std::endl;
+		std::cout << "Usage:" << std::endl << "wte <file_path>" << std::endl;
 		return 1;
 	}
 	std::string filePath = argv[1];
+	std::string fileName = filePath.substr(filePath.find_last_of("\\") + 1);
+	std::string extension = fileName.substr(fileName.find_last_of(".") + 1);
+	if (fileName.empty()) {
+		std::cout << "Invalid File Path." << std::endl;
+		return 1;
+	}
+	else if (fileName.find_last_of(".") == std::string::npos || std::find(validPlainExtensions.begin(), validPlainExtensions.end(), extension) == validPlainExtensions.end()) {
+		std::cout << "Can only open plain text files." << std::endl;
+		return 1;
+	}
 
 	// 保存控制台原始状态和内容
 	ConsoleState initialState = ConsoleState{}.SaveConsoleState();
@@ -63,8 +78,7 @@ int main(int argc, char* argv[]) {
 
 	// 打印当前文件名
 	bool justOpened = true;
-	std::string fileName = filePath.substr(filePath.find_last_of("\\") + 1);
-	consoleState.printCmd("Opened: " + fileName, FOREGROUND_GREEN);
+	consoleState.printCmd("Opened: " + fileName, Config::getAttr(INFO_FRONT));
 
 	// 将光标位置设置为控制台缓冲区的左上角
 	consoleState.setCursorPos({ 0, 0 });
@@ -79,11 +93,11 @@ int main(int argc, char* argv[]) {
 		if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &inputRecord, 1, &numEventsRead)) {
 			if (numEventsRead > 0) {
 				if (inputRecord.EventType == KEY_EVENT) {
-					if (justOpened) {
-						justOpened = false;
-						consoleState.printCmd("");
-					}
 					if (inputRecord.Event.KeyEvent.bKeyDown) {
+						if (justOpened) {
+							justOpened = false;
+							consoleState.printCmd("");
+						}
 						COORD currentCursorPos = consoleState.getCursorPos();
 						if (editorState.getEditorMode() == EDITOR_MODE_INSERT) {
 							if (inputRecord.Event.KeyEvent.wVirtualKeyCode >= 0x41 && inputRecord.Event.KeyEvent.wVirtualKeyCode <= 0x5A) {
@@ -134,7 +148,7 @@ int main(int argc, char* argv[]) {
 						case VK_DOWN:
 						{
 							// 按下键
-							if (currentCursorPos.Y < consoleState.getContentHeight() - 1) {
+							if (currentCursorPos.Y < consoleText.getTextHeight() - 1) {
 								consoleState.moveCursor(CURSOR_DOWN, 1);
 								backTillChar(CURSOR_DOWN);
 							}
@@ -181,7 +195,8 @@ int main(int argc, char* argv[]) {
 							editorState.setEditorMode(EDITOR_MODE_COMMAND);
 							std::string cmdStr = "";
 							consoleState.printCmd("");
-							std::cout << ":";
+							printWithColor(consoleState, "^_^", BACKGROUND_GREEN | 0x0f);
+							std::cout << ": ";
 							while (editorState.getEditorMode() == EDITOR_MODE_COMMAND) {
 								ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &cmdInputRecord, 1, &cmdNumEventsRead);
 								if (cmdInputRecord.EventType == KEY_EVENT) {
@@ -193,41 +208,129 @@ int main(int argc, char* argv[]) {
 										}
 										else if (cmdInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
 											// 按下回车键执行命令
-											consoleState.setCursorPos(currentCursorPos);
-											editorState.setEditorMode(currentMode);
 											if (cmdStr == "q") {
 												if (fileContent.getHasChanged()) {
-													consoleState.printCmd("Has Unsaved Changes. Use :wq to save and quit or :q! to force to quit.", FOREGROUND_RED);
+													consoleState.printErr("Has Unsaved Changes. Use :wq to save and quit or :q! to force to quit.");
 												}
 												else {
 													running_flag = false;
+													editorState.setEditorMode(currentMode);
 												}
 											}
 											else if (cmdStr == "q!") {
 												running_flag = false;
+												editorState.setEditorMode(currentMode);
 											}
 											else if (cmdStr == "w") {
+												editorState.setEditorMode(currentMode);
 												if (fileContent.getHasChanged()) {
 													fileContent.saveFile();
-													consoleState.printCmd("File Saved.", FOREGROUND_GREEN);
+													consoleState.printInfo("File Saved.");
 												}
 												else {
-													consoleState.printCmd("No changes need to be saved.", 0x0e);
+													consoleState.printWarn("No changes need to be saved.");
 												}
 											}
 											else if (cmdStr == "wq") {
 												if (fileContent.getHasChanged()) {
 													fileContent.saveFile();
 													running_flag = false;
+													editorState.setEditorMode(currentMode);
 												}
 												else {
-													consoleState.printCmd("No changes need to be saved.", 0x0e);
+													editorState.setEditorMode(currentMode);
+													consoleState.printWarn("No changes need to be saved. Try q Only.");
+												}
+											}
+											else if (cmdStr == "set color") {
+												consoleState.printCmd("");
+												consoleState.setCursorPos({ 0, consoleState.getContentHeight() });
+												printWithColor(consoleState, "^_^", BACKGROUND_BLUE | 0x0f);
+												std::cout << ": ";
+												INPUT_RECORD setInputRecord;
+												DWORD setNumEventsRead;
+												std::string setStr = "";
+												while (true) {
+													ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &setInputRecord, 1, &setNumEventsRead);
+													if (setInputRecord.EventType == KEY_EVENT) {
+														if (setInputRecord.Event.KeyEvent.bKeyDown) {
+															if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) {
+																break;
+															}
+															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) {
+																editorState.setEditorMode(currentMode);
+																break;
+															}
+															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_BACK) {
+																// 按下退格键
+																if (setStr.length() > 0) {
+																	setStr.pop_back();
+																	consoleState.printCmd("");
+																	consoleState.setCursorPos({ 0, consoleState.getContentHeight() });
+																	printWithColor(consoleState, "^_^", BACKGROUND_BLUE | 0x0f);
+																	std::cout << ": ";
+																	std::cout << setStr;
+																}
+															}
+															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_SPACE) {
+																// 按下空格键
+																setStr += " ";
+																std::cout << " ";
+															}
+															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_OEM_PLUS) {
+																setStr += "=";
+																std::cout << "=";
+															}
+															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_OEM_5) {
+																setStr += "|";
+																std::cout << "|";
+															}
+															else if (setInputRecord.Event.KeyEvent.wVirtualKeyCode >= 0x41 && setInputRecord.Event.KeyEvent.wVirtualKeyCode <= 0x5A) {
+																setStr += setInputRecord.Event.KeyEvent.uChar.AsciiChar;
+																std::cout << setInputRecord.Event.KeyEvent.uChar.AsciiChar;
+															}
+														}
+													}
+												}
+												std::string setType = setStr.substr(0, setStr.find_first_of("="));
+												std::string setColor = setStr.substr(setStr.find_first_of("=") + 1);
+												std::string frontColor = setColor.substr(0, setColor.find_first_of("|"));
+												std::string backColor = setColor.substr(setColor.find_first_of("|") + 1);
+												if (Config::getFrontColor(frontColor) == -1 || Config::getBackColor(backColor) == -1) {
+													consoleState.printErr("Unknown Color: " + frontColor + " or " + backColor);
+												}
+												else {
+													if (setType == "base") {
+														Config::setAttr(BASE_FRONT, frontColor);
+														Config::setAttr(BASE_BACK, backColor);
+														editorState.setEditorMode(currentMode);
+														consoleText.show();
+													}
+													else if (setType == "info") {
+														Config::setAttr(INFO_FRONT, frontColor);
+														Config::setAttr(INFO_BACK, backColor);
+														editorState.setEditorMode(currentMode);
+													}
+													else if (setType == "warn") {
+														Config::setAttr(WARN_FRONT, frontColor);
+														Config::setAttr(WARN_BACK, backColor);
+														editorState.setEditorMode(currentMode);
+													}
+													else if (setType == "err") {
+														Config::setAttr(ERR_FRONT, frontColor);
+														Config::setAttr(ERR_BACK, backColor);
+														editorState.setEditorMode(currentMode);
+													}
+													else {
+														consoleState.printErr("Unknown Command: " + setStr + ". Please try <type>=<foregroundColor>|[backgroundColor]");
+													}
 												}
 											}
 											else {
-												consoleState.printCmd("Unknown Command: " + cmdStr, FOREGROUND_RED);
+												consoleState.printErr("Unknown Command: " + cmdStr);
 											}
 											cmdStr = "";
+											consoleState.setCursorPos(currentCursorPos);
 										}
 										else if (cmdInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_BACK) {
 											// 按下退格键
@@ -235,7 +338,9 @@ int main(int argc, char* argv[]) {
 												cmdStr.pop_back();
 												consoleState.printCmd("");
 												consoleState.setCursorPos({ 0, consoleState.getContentHeight() });
-												std::cout << ":" << cmdStr;
+												printWithColor(consoleState, "^_^", BACKGROUND_GREEN | 0x0f);
+												std::cout << ": ";
+												std::cout << cmdStr;
 											}
 										}
 										else if (cmdInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_SPACE) {
@@ -243,11 +348,7 @@ int main(int argc, char* argv[]) {
 											cmdStr += " ";
 											std::cout << " ";
 										}
-										else if (cmdInputRecord.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT) {
-											// 按下Shift键
-											continue;
-										}
-										else {
+										else if (cmdInputRecord.Event.KeyEvent.wVirtualKeyCode >= 0x41 && cmdInputRecord.Event.KeyEvent.wVirtualKeyCode <= 0x5A) {
 											cmdStr += cmdInputRecord.Event.KeyEvent.uChar.AsciiChar;
 											std::cout << cmdInputRecord.Event.KeyEvent.uChar.AsciiChar;
 										}

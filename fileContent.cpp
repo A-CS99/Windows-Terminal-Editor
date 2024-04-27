@@ -1,4 +1,5 @@
 #include "fileContent.h"
+#include "toolFuncs.h"
 #include <iostream>
 
 FileContent::FileContent() {
@@ -42,12 +43,12 @@ FileContent::FileContent(std::string filePath) {
 		file.close();
 	}
 	else {
-		std::cout << "Error: Unable to open file " << filePath << std::endl;
+		this->isFileExist = false;
 		ContentWithLine lineInfo;
-		lineInfo.lineNumber = 0;
-		lineInfo.content = " ";
+		lineInfo.lineNumber = 1;
+		lineInfo.content = "Error: Unable to open file";
 		content.push_back(lineInfo);
-		this->fileLineCount = 0;
+		this->fileLineCount = 1;
 	}
 }
 
@@ -65,7 +66,15 @@ std::vector<ContentWithLine> FileContent::getContentBetween(int start, int end) 
 	}
 	std::vector<ContentWithLine> result;
 	for (int i = start; i <= end; i++) {
-		result.push_back(this->content[i]);
+		if (content.size() > i) {
+			result.push_back(this->content[i]);
+		}
+		else {
+			ContentWithLine lineInfo;
+			lineInfo.lineNumber = i;
+			lineInfo.content = "~";
+			result.push_back(lineInfo);
+		}
 	}
 	return result;
 }

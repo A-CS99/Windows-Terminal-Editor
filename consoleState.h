@@ -34,6 +34,10 @@ public:
 	void moveCursor(CursorDirection direction, int step);
 	void printCmd(std::string cmdStr);
 	void printCmd(std::string cmdStr, WORD textAttr);
+	void printInfo(std::string infoStr);
+	void printWarn(std::string warnStr);
+	void printErr(std::string errStr);
+	void setTextAttr(WORD textAttr);
 	ConsoleState SaveConsoleState();
 	void RestoreConsoleState(ConsoleState state);
 };

@@ -38,3 +38,12 @@ void ScrollConsoleContent(ConsoleState state, int stepY) {
 		jumpPrint({ 0, ContentHeight }, "ScrollConsoleScreenBuffer failed", state);
 	}
 }
+
+void printWithColor(ConsoleState state, std::string str, WORD textAttr) {
+	// 输出带颜色的字符串
+	HANDLE hConsole = state.getHConsoleOutput();
+	WORD oldTextAttr = state.getCSBI().wAttributes;
+	SetConsoleTextAttribute(hConsole, textAttr);
+	std::cout << str;
+	SetConsoleTextAttribute(hConsole, oldTextAttr);
+}

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "consoleState.h"
+#include "config.h"
 
 ConsoleState::ConsoleState() {
 	// 设置控制台输出编码为 UTF-8
@@ -93,6 +94,7 @@ void ConsoleState::printCmd(std::string cmdStr) {
 	COORD consoleSize = this->getConsoleSize();
 	this->setCursorPos({ 0, this->getContentHeight() });
 	// 输出consoleSize.X个空字符, 清除行内容, 以便打印命令
+	this->setTextAttr(0x0f | 0);
 	for (int i = 0; i < consoleSize.X; i++) {
 		std::cout << " ";
 	}
@@ -119,6 +121,22 @@ void ConsoleState::printCmd(std::string cmdStr, WORD textAttr) {
 	std::cout << cmdStr;
 	this->setCursorPos(pos);
 	SetConsoleTextAttribute(this->hConsoleOutput, oldTextAttr);
+}
+
+void ConsoleState::printInfo(std::string infoStr) {
+	printCmd(infoStr, Config::getAttr(INFO_FRONT) | Config::getAttr(INFO_BACK));
+}
+
+void ConsoleState::printWarn(std::string warnStr) {
+	printCmd(warnStr, Config::getAttr(WARN_FRONT) | Config::getAttr(WARN_BACK));
+}
+
+void ConsoleState::printErr(std::string errStr) {
+	printCmd(errStr, Config::getAttr(ERR_FRONT) | Config::getAttr(ERR_BACK));
+}
+
+void ConsoleState::setTextAttr(WORD textAttr) {
+	SetConsoleTextAttribute(this->hConsoleOutput, textAttr);
 }
 
 // 保存控制台状态和内容

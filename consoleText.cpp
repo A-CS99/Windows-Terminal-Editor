@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include "config.h"
 #include "consoleText.h"
 
 ConsoleText::ConsoleText() {
@@ -14,10 +15,15 @@ ConsoleText::ConsoleText(ConsoleState state, FileContent* fileContent, int textH
 	this->consoleState = state;
 	this->with_line_number = false;
 	this->text_start = 1;
-	this->text_end = textHeight;
-	this->textHeight = textHeight;
+	if (textHeight > fileContent->getFileLineCount()) {
+		this->textHeight = fileContent->getFileLineCount();
+	}
+	else {
+		this->textHeight = textHeight;
+	}
+	this->text_end = this->textHeight;
 	this->fileContent = fileContent;
-	text = fileContent->getContentBetween(1, textHeight);
+	text = fileContent->getContentBetween(1, this->textHeight);
 }
 
 bool ConsoleText::isTextEmpty() {
@@ -30,6 +36,10 @@ bool ConsoleText::isFileStart() {
 
 bool ConsoleText::isFileEnd() {
 	return this->text_end == this->fileContent->getFileLineCount();
+}
+
+int ConsoleText::getTextHeight() {
+	return this->textHeight;
 }
 
 void ConsoleText::updateText(int start, int end) {
@@ -61,6 +71,7 @@ void ConsoleText::showLine(int lineNo) {
 	}
 	lineNo--;
 	consoleState.setCursorPos({ 0, cursorPos.Y });
+	consoleState.setTextAttr(Config::getAttr(BASE_FRONT) | Config::getAttr(BASE_BACK));
 	std::string blankLine = "";
 	for (int i = 0; i < consoleState.getConsoleSize().X; i++) {
 		blankLine += " ";
@@ -72,13 +83,10 @@ void ConsoleText::showLine(int lineNo) {
 		return;
 	}
 	if (this->with_line_number) {
-		// 获取当前文本属性
-		WORD oldTextAttr = consoleState.getCSBI().wAttributes;
-		SetConsoleTextAttribute(consoleState.getHConsoleOutput(), 0x08);
+		consoleState.setTextAttr(Config::getAttr(LNO_FRONT) | Config::getAttr(LNO_BACK));
 		std::cout << text[lineNo].lineNumber << "\t";
-		// 恢复文本属性
-		SetConsoleTextAttribute(consoleState.getHConsoleOutput(), oldTextAttr);
 	}
+	consoleState.setTextAttr(Config::getAttr(BASE_FRONT) | Config::getAttr(BASE_BACK));
 	std::cout << text[lineNo].content << std::endl;
 }
 

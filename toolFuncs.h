@@ -6,3 +6,5 @@
 void jumpPrint(COORD pos, std::string str, ConsoleState state);
 
 void ScrollConsoleContent(ConsoleState state, int stepY);
+
+void printWithColor(ConsoleState state, std::string str, WORD textAttr);
